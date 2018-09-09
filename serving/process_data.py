@@ -1,3 +1,4 @@
+#!/usr/bin/python
 
 
 def preprocess(df):
@@ -35,11 +36,8 @@ def predict_data(model_path, data):
         spark = get_spark(app_name="pred")
         logger = get_logger(spark, "pred_logger")
         logger.info("{} rows".format(len(data)))
-        # if len(data) == 1:
-        # one input
-        #   spark_data = spark.createDataFrame([data], get_pred_schema())
-        # else:
-        # multiple inputs
+
+        # create spark dataframe
         spark_data = spark.createDataFrame(data, get_pred_schema())
 
         # preprocessing
