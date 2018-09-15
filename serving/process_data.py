@@ -25,16 +25,13 @@ def preprocess(df):
     return vector_df
 
 
-def predict_data(model_path, data):
+def predict_data(spark, logger, model_path, data):
     import traceback
     from pyspark.ml.regression import RandomForestRegressionModel
-    from project.spark import get_spark, get_logger
     from project.schema import get_pred_schema
 
     try:
         assert len(data) > 0, 'empty data'
-        spark = get_spark(app_name="pred")
-        logger = get_logger(spark, "pred_logger")
         logger.info("{} rows".format(len(data)))
 
         # create spark dataframe
@@ -50,7 +47,4 @@ def predict_data(model_path, data):
 
     except Exception:
         logger.error(traceback.print_exc())
-
-    finally:
-        # stop spark
-        spark.stop()
+        return None
