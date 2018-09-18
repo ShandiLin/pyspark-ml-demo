@@ -4,7 +4,7 @@ import ast
 import atexit
 from flask import Flask, jsonify, request
 
-from process_data import predict_data
+from process_data import predict_data_pipe
 from project.spark import get_spark, get_logger
 
 app = Flask(__name__)
@@ -27,8 +27,8 @@ def predict():
     if request.method == 'POST':
         data = request.json.get('data')
         if data:
-            pred = predict_data(spark, logger, model_path,
-                                ast.literal_eval(data))
+            pred = predict_data_pipe(spark, logger, model_path,
+                                     ast.literal_eval(data))
             return jsonify(result=pred)
         else:
             return jsonify(result='empty input')

@@ -1,3 +1,7 @@
+#
+#     only str2num function is used if using pyspark pipeline in train.py
+#
+
 import pyspark.sql.functions as F
 from pyspark.sql.types import IntegerType
 from pyspark.ml.feature import StringIndexer, VectorAssembler

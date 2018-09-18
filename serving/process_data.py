@@ -1,8 +1,9 @@
 #!/usr/bin/python
+import traceback
+import pyspark.sql.functions as F
 
 
 def preprocess(df):
-    import pyspark.sql.functions as F
     from pyspark.ml import Pipeline
     from pyspark.ml.feature import VectorAssembler
     from project.preprocess import str2num, get_strIdxers
@@ -26,10 +27,11 @@ def preprocess(df):
 
 
 def predict_data(spark, logger, model_path, data):
-    import traceback
+    '''
+        preprocess without pipeline
+    '''
     from pyspark.ml.regression import RandomForestRegressionModel
     from project.schema import get_pred_schema
-
     try:
         assert len(data) > 0, 'empty data'
         logger.info("{} rows".format(len(data)))
@@ -43,6 +45,30 @@ def predict_data(spark, logger, model_path, data):
         # load and predict
         m = RandomForestRegressionModel.load(model_path)
         pred = m.transform(preprocess_data)
+        return [p['prediction'] for p in pred.collect()]
+
+    except Exception:
+        logger.error(traceback.print_exc())
+        return None
+
+
+def predict_data_pipe(spark, logger, model_path, data):
+    '''
+        preprocess with pipeline
+    '''
+    from pyspark.ml import PipelineModel
+    from project.pyspark_pipeline_wrapper import PysparkPipelineWrapper
+    from project.schema import get_pred_schema
+    try:
+        assert len(data) > 0, 'empty data'
+        logger.info("{} rows".format(len(data)))
+
+        # create spark dataframe
+        spark_data = spark.createDataFrame(data, get_pred_schema())
+
+        # load and predict
+        model = PysparkPipelineWrapper.unwrap(PipelineModel.load(model_path))
+        pred = model.transform(spark_data)
         return [p['prediction'] for p in pred.collect()]
 
     except Exception:

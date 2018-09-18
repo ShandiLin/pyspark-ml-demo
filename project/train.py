@@ -3,11 +3,13 @@ import sys
 import shutil
 import traceback
 
+import pyspark.sql.functions as F
 from pyspark.ml.regression import RandomForestRegressor
 from pyspark.ml.evaluation import RegressionEvaluator
 
 from spark import get_spark, get_logger
-from preprocess import run_preprocess
+from preprocess import str2num
+from pipeline import get_stages, create_pipeline
 from schema import get_train_schema
 
 assert len(os.environ.get('JAVA_HOME')) != 0, 'JAVA_HOME not set'
@@ -31,32 +33,35 @@ def main():
         df = spark.read.schema(get_train_schema()).option('header', True).csv(
             SERVICE_HOME + '/dataset/WA_Fn-UseC_-HR-Employee-Attrition.csv')
 
-        # preprocess
-        vector_df = run_preprocess(df)
+        # label preprocessing (only in training part)
+        df = df.withColumn('label', str2num(
+            F.col('Attrition'), {'No': 0, 'Yes': 1})) \
+            .drop('Attrition')
 
         # seperate train and valid
-        logger.info('preprocessing')
-        (train_data, valid_data) = vector_df.randomSplit([0.8, 0.2])
+        (train_data, valid_data) = df.randomSplit([0.8, 0.2])
 
-        # training
-        logger.info('training')
+        # preprocess(pipeline / non-pipeline) / training
+        logger.info('preprocessing & training')
+        stages = get_stages(train_data)
         rf = RandomForestRegressor(
             labelCol="label", featuresCol="features", numTrees=10)
-        model = rf.fit(train_data)
+        stages.append(rf)
+        mypipeline = create_pipeline(stages)
+        mymodel = mypipeline.fit(train_data)
 
         # get validation metric
-        predictions = model.transform(valid_data)
+        predictions = mymodel.transform(valid_data)
         evaluator = RegressionEvaluator(
             labelCol="label", predictionCol="prediction", metricName="rmse")
         rmse = evaluator.evaluate(predictions)
         logger.info('valid rmse: {}'.format(rmse))
 
-        # save or update model
         model_path = SERVICE_HOME + '/model'
         if os.path.exists(model_path):
             shutil.rmtree(model_path)
             logger.info('model exist, rm old model')
-        model.save(model_path)
+        mymodel.save(model_path)
         logger.info('save model to {}'.format(model_path))
 
     except Exception:
