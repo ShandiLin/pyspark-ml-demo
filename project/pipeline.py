@@ -49,7 +49,7 @@ class Str2Map(Transformer, HasInputCol, HasOutputCol, Identifiable, PysparkReade
 def get_stages(df):
     from pyspark.ml.feature import StringIndexer, VectorAssembler
     # for serving code to call above class
-    from project.pipeline import DropCols, Str2Map
+    from pipeline import DropCols, Str2Map
 
     dropOver18 = DropCols(['over18'])
     overtime = Str2Map(maps={'No': 0, 'Yes': 1},
