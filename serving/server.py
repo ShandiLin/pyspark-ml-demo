@@ -5,7 +5,7 @@ import atexit
 from flask import Flask, jsonify, request
 
 from process_data import predict_data_pipe
-from project.spark import get_spark, get_logger
+from myspark import get_spark, get_logger
 
 app = Flask(__name__)
 

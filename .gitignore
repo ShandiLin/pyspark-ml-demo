@@ -43,3 +43,7 @@ model/
 jupyter/
 .ipynb_checkpoints
 spark-warehouse
+
+# venv
+################
+venv/

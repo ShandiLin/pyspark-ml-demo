@@ -1,9 +1,9 @@
 #!/usr/bin/python
 import traceback
-import pyspark.sql.functions as F
 
 
 def preprocess(df):
+    import pyspark.sql.functions as F
     from pyspark.ml import Pipeline
     from pyspark.ml.feature import VectorAssembler
     from project.preprocess import str2num, get_strIdxers
